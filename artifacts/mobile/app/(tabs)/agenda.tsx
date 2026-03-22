@@ -28,26 +28,26 @@ function groupByDate(actions: Action[]): { title: string; data: Action[] }[] {
   const nextWeek = new Date(today.getTime() + 7 * 86400000);
 
   const groups: Record<string, Action[]> = {
-    Overdue: [],
-    Today: [],
-    Tomorrow: [],
-    "This Week": [],
-    "Later": [],
-    "No Date": [],
+    "En retard": [],
+    "Aujourd'hui": [],
+    "Demain": [],
+    "Cette semaine": [],
+    "Plus tard": [],
+    "Sans date": [],
   };
 
   for (const action of actions) {
     if (action.completed) continue;
     if (!action.dueDate) {
-      groups["No Date"].push(action);
+      groups["Sans date"].push(action);
       continue;
     }
     const d = new Date(action.dueDate);
-    if (d < today) groups["Overdue"].push(action);
-    else if (d < tomorrow) groups["Today"].push(action);
-    else if (d < new Date(tomorrow.getTime() + 86400000)) groups["Tomorrow"].push(action);
-    else if (d < nextWeek) groups["This Week"].push(action);
-    else groups["Later"].push(action);
+    if (d < today) groups["En retard"].push(action);
+    else if (d < tomorrow) groups["Aujourd'hui"].push(action);
+    else if (d < new Date(tomorrow.getTime() + 86400000)) groups["Demain"].push(action);
+    else if (d < nextWeek) groups["Cette semaine"].push(action);
+    else groups["Plus tard"].push(action);
   }
 
   return Object.entries(groups)
@@ -88,17 +88,17 @@ export default function AgendaScreen() {
 
   const sections = useMemo(() => {
     if (filter === "completed") {
-      return [{ title: "Completed", data: filtered.filter((a) => a.completed) }];
+      return [{ title: "Terminés", data: filtered.filter((a) => a.completed) }];
     }
     if (filter === "all") {
       const grouped = groupByDate(filtered);
       const completed = filtered.filter((a) => a.completed);
       if (completed.length > 0) {
-        grouped.push({ title: "Completed", data: completed });
+        grouped.push({ title: "Terminés", data: completed });
       }
       return grouped;
     }
-    return [{ title: filter === "upcoming" ? "Upcoming" : "Overdue", data: filtered }];
+    return [{ title: filter === "upcoming" ? "À venir" : "En retard", data: filtered }];
   }, [filtered, filter]);
 
   const handleRefresh = async () => {
@@ -113,10 +113,10 @@ export default function AgendaScreen() {
   };
 
   const handleDelete = (id: number) => {
-    Alert.alert("Delete Action", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("Supprimer l'action", "Êtes-vous sûr ?", [
+      { text: "Annuler", style: "cancel" },
       {
-        text: "Delete",
+        text: "Supprimer",
         style: "destructive",
         onPress: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -128,10 +128,10 @@ export default function AgendaScreen() {
 
   const filters: Filter[] = ["all", "upcoming", "overdue", "completed"];
   const filterLabels: Record<Filter, string> = {
-    all: "All",
-    upcoming: "Upcoming",
-    overdue: "Overdue",
-    completed: "Done",
+    all: "Tous",
+    upcoming: "À venir",
+    overdue: "En retard",
+    completed: "Terminés",
   };
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
@@ -146,7 +146,6 @@ export default function AgendaScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -163,20 +162,18 @@ export default function AgendaScreen() {
             <View style={[styles.overdueChip, { backgroundColor: colors.statusNotInterested + "22" }]}>
               <Ionicons name="alert-circle" size={13} color={colors.statusNotInterested} />
               <Text style={[styles.overdueText, { color: colors.statusNotInterested }]}>
-                {stats.overdue} overdue
+                {stats.overdue} en retard
               </Text>
             </View>
           )}
         </View>
 
-        {/* Stats row */}
         <View style={styles.statsRow}>
           <StatPill label="Total" value={stats.total} color={colors.tint} />
-          <StatPill label="Done" value={stats.done} color={colors.statusInterested} />
-          <StatPill label="Pending" value={stats.total - stats.done} color={colors.statusContacted} />
+          <StatPill label="Terminés" value={stats.done} color={colors.statusInterested} />
+          <StatPill label="En attente" value={stats.total - stats.done} color={colors.statusContacted} />
         </View>
 
-        {/* Filter pills */}
         <View style={styles.filterRow}>
           {filters.map((f) => (
             <Pressable
@@ -234,7 +231,12 @@ export default function AgendaScreen() {
                 },
               ]}
             >
-              <Text style={[styles.sectionTitle, { color: section.title === "Overdue" ? colors.statusNotInterested : colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: section.title === "En retard" ? colors.statusNotInterested : colors.textSecondary },
+                ]}
+              >
                 {section.title}
               </Text>
               <Text style={[styles.sectionCount, { color: colors.textSecondary }]}>
@@ -250,9 +252,9 @@ export default function AgendaScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No actions</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune action</Text>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Add follow-up actions from a contact's page
+                Ajoutez des actions de suivi depuis la fiche d'un prospect
               </Text>
             </View>
           }

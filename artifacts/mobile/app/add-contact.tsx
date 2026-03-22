@@ -6,6 +6,7 @@ import {
   TextInput,
   Pressable,
   ScrollView,
+  KeyboardAvoidingView,
   useColorScheme,
   ActivityIndicator,
   Alert,
@@ -15,7 +16,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Colors from "@/constants/colors";
 import { useCreateContact } from "@/hooks/useContacts";
 
@@ -23,19 +23,19 @@ type Status = "new" | "contacted" | "interested" | "not_interested" | "closed";
 type PropertyType = "house" | "apartment" | "land" | "commercial" | "other";
 
 const STATUS_OPTIONS: { value: Status; label: string; color: string }[] = [
-  { value: "new", label: "New", color: "#3B82F6" },
-  { value: "contacted", label: "Contacted", color: "#F59E0B" },
-  { value: "interested", label: "Interested", color: "#10B981" },
-  { value: "not_interested", label: "Not Interested", color: "#EF4444" },
-  { value: "closed", label: "Closed", color: "#8B5CF6" },
+  { value: "new", label: "Nouveau", color: "#3B82F6" },
+  { value: "contacted", label: "Contacté", color: "#F59E0B" },
+  { value: "interested", label: "Intéressé", color: "#10B981" },
+  { value: "not_interested", label: "Pas intéressé", color: "#EF4444" },
+  { value: "closed", label: "Conclu", color: "#8B5CF6" },
 ];
 
 const PROPERTY_OPTIONS: { value: PropertyType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { value: "house", label: "House", icon: "home" },
-  { value: "apartment", label: "Apartment", icon: "business" },
-  { value: "land", label: "Land", icon: "leaf" },
+  { value: "house", label: "Maison", icon: "home" },
+  { value: "apartment", label: "Appartement", icon: "business" },
+  { value: "land", label: "Terrain", icon: "leaf" },
   { value: "commercial", label: "Commercial", icon: "storefront" },
-  { value: "other", label: "Other", icon: "cube" },
+  { value: "other", label: "Autre", icon: "cube" },
 ];
 
 export default function AddContactScreen() {
@@ -59,14 +59,14 @@ export default function AddContactScreen() {
 
   const handleSave = async () => {
     if (!isValid) {
-      Alert.alert("Missing Fields", "Name and location coordinates are required.");
+      Alert.alert("Champs manquants", "Le nom et les coordonnées sont obligatoires.");
       return;
     }
 
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
     if (isNaN(latitude) || isNaN(longitude)) {
-      Alert.alert("Invalid Coordinates", "Please enter valid latitude and longitude.");
+      Alert.alert("Coordonnées invalides", "Veuillez saisir une latitude et longitude valides.");
       return;
     }
 
@@ -86,7 +86,7 @@ export default function AddContactScreen() {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (err) {
-      Alert.alert("Error", "Failed to save contact. Please try again.");
+      Alert.alert("Erreur", "Impossible d'enregistrer le prospect. Veuillez réessayer.");
     }
   };
 
@@ -98,8 +98,11 @@ export default function AddContactScreen() {
   const labelStyle = [styles.label, { color: colors.textSecondary }];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
-      {/* Sheet header */}
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      {/* En-tête */}
       <View
         style={[
           styles.sheetHeader,
@@ -110,9 +113,9 @@ export default function AddContactScreen() {
         ]}
       >
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Text style={[styles.cancelBtn, { color: colors.textSecondary }]}>Cancel</Text>
+          <Text style={[styles.cancelBtn, { color: colors.textSecondary }]}>Annuler</Text>
         </Pressable>
-        <Text style={[styles.sheetTitle, { color: colors.text }]}>New Prospect</Text>
+        <Text style={[styles.sheetTitle, { color: colors.text }]}>Nouveau Prospect</Text>
         <Pressable
           onPress={handleSave}
           disabled={!isValid || createContact.isPending}
@@ -124,19 +127,18 @@ export default function AddContactScreen() {
           {createContact.isPending ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Text style={styles.saveBtnText}>Save</Text>
+            <Text style={styles.saveBtnText}>Enregistrer</Text>
           )}
         </Pressable>
       </View>
 
-      <KeyboardAwareScrollView
+      <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        bottomOffset={20}
       >
-        {/* Location info */}
+        {/* Localisation */}
         {params.lat && params.lng ? (
           <View style={[styles.locationBanner, { backgroundColor: colors.tint + "15" }]}>
             <Ionicons name="location" size={14} color={colors.tint} />
@@ -146,12 +148,12 @@ export default function AddContactScreen() {
           </View>
         ) : null}
 
-        {/* Name */}
+        {/* Nom */}
         <View style={styles.field}>
-          <Text style={labelStyle}>Name *</Text>
+          <Text style={labelStyle}>Nom *</Text>
           <TextInput
             style={inputStyle}
-            placeholder="Full name"
+            placeholder="Nom complet"
             placeholderTextColor={colors.textSecondary}
             value={name}
             onChangeText={setName}
@@ -159,10 +161,10 @@ export default function AddContactScreen() {
           />
         </View>
 
-        {/* Phone & Email */}
+        {/* Téléphone & Email */}
         <View style={styles.row}>
           <View style={[styles.field, { flex: 1 }]}>
-            <Text style={labelStyle}>Phone</Text>
+            <Text style={labelStyle}>Téléphone</Text>
             <TextInput
               style={inputStyle}
               placeholder="+33 6 ..."
@@ -186,26 +188,26 @@ export default function AddContactScreen() {
           </View>
         </View>
 
-        {/* Address */}
+        {/* Adresse */}
         <View style={styles.field}>
-          <Text style={labelStyle}>Address</Text>
+          <Text style={labelStyle}>Adresse</Text>
           <TextInput
             style={inputStyle}
-            placeholder="Street address"
+            placeholder="Rue, ville..."
             placeholderTextColor={colors.textSecondary}
             value={address}
             onChangeText={setAddress}
           />
         </View>
 
-        {/* Coordinates (if not set by map) */}
+        {/* Coordonnées (si non définies par la carte) */}
         {(!params.lat || !params.lng) ? (
           <View style={styles.row}>
             <View style={[styles.field, { flex: 1 }]}>
               <Text style={labelStyle}>Latitude *</Text>
               <TextInput
                 style={inputStyle}
-                placeholder="48.8566"
+                placeholder="48.562"
                 placeholderTextColor={colors.textSecondary}
                 value={lat}
                 onChangeText={setLat}
@@ -216,7 +218,7 @@ export default function AddContactScreen() {
               <Text style={labelStyle}>Longitude *</Text>
               <TextInput
                 style={inputStyle}
-                placeholder="2.3522"
+                placeholder="-3.465"
                 placeholderTextColor={colors.textSecondary}
                 value={lng}
                 onChangeText={setLng}
@@ -226,9 +228,9 @@ export default function AddContactScreen() {
           </View>
         ) : null}
 
-        {/* Status */}
+        {/* Statut */}
         <View style={styles.field}>
-          <Text style={labelStyle}>Status</Text>
+          <Text style={labelStyle}>Statut</Text>
           <View style={styles.chipRow}>
             {STATUS_OPTIONS.map((opt) => (
               <Pressable
@@ -260,9 +262,9 @@ export default function AddContactScreen() {
           </View>
         </View>
 
-        {/* Property type */}
+        {/* Type de bien */}
         <View style={styles.field}>
-          <Text style={labelStyle}>Property Type</Text>
+          <Text style={labelStyle}>Type de bien</Text>
           <View style={styles.chipRow}>
             {PROPERTY_OPTIONS.map((opt) => (
               <Pressable
@@ -307,7 +309,7 @@ export default function AddContactScreen() {
           <Text style={labelStyle}>Notes</Text>
           <TextInput
             style={[inputStyle, styles.notesInput]}
-            placeholder="Add encounter details, observations..."
+            placeholder="Détails de la rencontre, observations..."
             placeholderTextColor={colors.textSecondary}
             value={notes}
             onChangeText={setNotes}
@@ -318,8 +320,8 @@ export default function AddContactScreen() {
         </View>
 
         <View style={{ height: 40 }} />
-      </KeyboardAwareScrollView>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

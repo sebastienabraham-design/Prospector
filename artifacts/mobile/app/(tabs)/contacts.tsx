@@ -22,12 +22,12 @@ import type { Contact } from "@workspace/api-client-react";
 type Status = Contact["status"];
 const STATUS_FILTERS: (Status | "all")[] = ["all", "new", "contacted", "interested", "not_interested", "closed"];
 const STATUS_LABELS: Record<Status | "all", string> = {
-  all: "All",
-  new: "New",
-  contacted: "Contacted",
-  interested: "Interested",
-  not_interested: "Not Int.",
-  closed: "Closed",
+  all: "Tous",
+  new: "Nouveau",
+  contacted: "Contacté",
+  interested: "Intéressé",
+  not_interested: "Pas int.",
+  closed: "Conclu",
 };
 
 export default function ContactsScreen() {
@@ -67,7 +67,6 @@ export default function ContactsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -79,7 +78,7 @@ export default function ContactsScreen() {
         ]}
       >
         <View style={styles.headerTop}>
-          <Text style={[styles.title, { color: colors.text }]}>Contacts</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Prospects</Text>
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -91,7 +90,6 @@ export default function ContactsScreen() {
           </Pressable>
         </View>
 
-        {/* Search bar */}
         <View
           style={[
             styles.searchBar,
@@ -101,7 +99,7 @@ export default function ContactsScreen() {
           <Ionicons name="search" size={16} color={colors.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search contacts..."
+            placeholder="Rechercher..."
             placeholderTextColor={colors.textSecondary}
             value={search}
             onChangeText={setSearch}
@@ -113,7 +111,6 @@ export default function ContactsScreen() {
           )}
         </View>
 
-        {/* Filter row */}
         <View style={styles.filterRow}>
           {STATUS_FILTERS.map((s) => (
             <Pressable
@@ -144,7 +141,6 @@ export default function ContactsScreen() {
         </View>
       </View>
 
-      {/* List */}
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.tint} />
@@ -172,19 +168,19 @@ export default function ContactsScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="people-outline" size={48} color={colors.textSecondary} />
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {search ? "No results found" : "No contacts yet"}
+                {search ? "Aucun résultat" : "Aucun prospect"}
               </Text>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 {search
-                  ? "Try a different search term"
-                  : "Tap the map to add your first prospect"}
+                  ? "Essayez un autre terme de recherche"
+                  : "Appuyez sur la carte pour ajouter votre premier prospect"}
               </Text>
             </View>
           }
           ListFooterComponent={
             filtered.length > 0 ? (
               <Text style={[styles.footerCount, { color: colors.textSecondary }]}>
-                {filtered.length} contact{filtered.length !== 1 ? "s" : ""}
+                {filtered.length} prospect{filtered.length !== 1 ? "s" : ""}
               </Text>
             ) : null
           }

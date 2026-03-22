@@ -1,0 +1,46 @@
+const primary = "#1B3A6B";
+const accent = "#F5A623";
+const teal = "#2AB5A8";
+
+export default {
+  light: {
+    text: "#0F172A",
+    textSecondary: "#64748B",
+    background: "#F8FAFC",
+    backgroundSecondary: "#FFFFFF",
+    card: "#FFFFFF",
+    border: "#E2E8F0",
+    tint: primary,
+    tabIconDefault: "#94A3B8",
+    tabIconSelected: primary,
+    accent,
+    teal,
+    primary,
+    statusNew: "#3B82F6",
+    statusContacted: "#F59E0B",
+    statusInterested: "#10B981",
+    statusNotInterested: "#EF4444",
+    statusClosed: "#8B5CF6",
+    shadow: "rgba(15, 23, 42, 0.08)",
+  },
+  dark: {
+    text: "#F1F5F9",
+    textSecondary: "#94A3B8",
+    background: "#0F172A",
+    backgroundSecondary: "#1E293B",
+    card: "#1E293B",
+    border: "#334155",
+    tint: "#4A90D9",
+    tabIconDefault: "#475569",
+    tabIconSelected: "#4A90D9",
+    accent,
+    teal,
+    primary: "#4A90D9",
+    statusNew: "#60A5FA",
+    statusContacted: "#FCD34D",
+    statusInterested: "#34D399",
+    statusNotInterested: "#F87171",
+    statusClosed: "#A78BFA",
+    shadow: "rgba(0, 0, 0, 0.3)",
+  },
+};

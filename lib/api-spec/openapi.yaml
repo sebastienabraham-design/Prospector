@@ -1,22 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Real Estate Prospector API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: contacts
+    description: Real estate prospect contacts
+  - name: actions
+    description: Follow-up actions / agenda items
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +26,188 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /contacts:
+    get:
+      operationId: listContacts
+      tags: [contacts]
+      summary: List all contacts
+      responses:
+        "200":
+          description: List of contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contact"
+    post:
+      operationId: createContact
+      tags: [contacts]
+      summary: Create a new contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactInput"
+      responses:
+        "201":
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+
+  /contacts/{id}:
+    get:
+      operationId: getContact
+      tags: [contacts]
+      summary: Get contact by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Contact
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateContact
+      tags: [contacts]
+      summary: Update a contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactInput"
+      responses:
+        "200":
+          description: Updated contact
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteContact
+      tags: [contacts]
+      summary: Delete a contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /actions:
+    get:
+      operationId: listActions
+      tags: [actions]
+      summary: List all actions
+      parameters:
+        - name: contactId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Action"
+    post:
+      operationId: createAction
+      tags: [actions]
+      summary: Create a follow-up action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateActionInput"
+      responses:
+        "201":
+          description: Action created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Action"
+
+  /actions/{id}:
+    put:
+      operationId: updateAction
+      tags: [actions]
+      summary: Update an action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateActionInput"
+      responses:
+        "200":
+          description: Updated action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Action"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAction
+      tags: [actions]
+      summary: Delete an action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +218,197 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Contact:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [new, contacted, interested, not_interested, closed]
+        notes:
+          type: string
+          nullable: true
+        propertyType:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - latitude
+        - longitude
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateContactInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [new, contacted, interested, not_interested, closed]
+        notes:
+          type: string
+          nullable: true
+        propertyType:
+          type: string
+          nullable: true
+      required:
+        - name
+        - latitude
+        - longitude
+        - status
+
+    UpdateContactInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [new, contacted, interested, not_interested, closed]
+        notes:
+          type: string
+          nullable: true
+        propertyType:
+          type: string
+          nullable: true
+
+    Action:
+      type: object
+      properties:
+        id:
+          type: integer
+        contactId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        completed:
+          type: boolean
+        actionType:
+          type: string
+          enum: [call, visit, email, meeting, other]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - contactId
+        - title
+        - completed
+        - actionType
+        - createdAt
+        - updatedAt
+
+    CreateActionInput:
+      type: object
+      properties:
+        contactId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        actionType:
+          type: string
+          enum: [call, visit, email, meeting, other]
+      required:
+        - contactId
+        - title
+        - actionType
+
+    UpdateActionInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        completed:
+          type: boolean
+        actionType:
+          type: string
+          enum: [call, visit, email, meeting, other]

@@ -6,6 +6,7 @@ import {
   Pressable,
   useColorScheme,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import MapView, { Marker, Callout, PROVIDER_DEFAULT } from "react-native-maps";
 import { router } from "expo-router";
@@ -26,11 +27,11 @@ const STATUS_COLORS: Record<Status, string> = {
   closed: "#8B5CF6",
 };
 
-const PARIS_REGION = {
-  latitude: 48.8566,
-  longitude: 2.3522,
-  latitudeDelta: 0.08,
-  longitudeDelta: 0.08,
+const COTES_DARMOR_REGION = {
+  latitude: 48.5,
+  longitude: -2.75,
+  latitudeDelta: 0.5,
+  longitudeDelta: 0.5,
 };
 
 type FilterStatus = Status | "all";
@@ -73,11 +74,11 @@ export default function MapScreen() {
       <MapView
         style={styles.map}
         provider={PROVIDER_DEFAULT}
-        initialRegion={PARIS_REGION}
+        initialRegion={COTES_DARMOR_REGION}
         onPress={handleMapPress}
         showsUserLocation
         showsMyLocationButton={false}
-        mapType={colorScheme === "dark" ? "mutedStandard" : "standard"}
+        mapType={Platform.OS === "ios" && colorScheme === "dark" ? "mutedStandard" : "standard"}
       >
         {filteredContacts.map((contact) => {
           const isSelected = selectedId === contact.id;

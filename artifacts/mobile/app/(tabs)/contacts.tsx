@@ -18,17 +18,7 @@ import Colors from "@/constants/colors";
 import { useContacts } from "@/hooks/useContacts";
 import { ContactCard } from "@/components/ContactCard";
 import type { Contact } from "@workspace/api-client-react";
-
-type Status = Contact["status"];
-const STATUS_FILTERS: (Status | "all")[] = ["all", "new", "contacted", "interested", "not_interested", "closed"];
-const STATUS_LABELS: Record<Status | "all", string> = {
-  all: "Tous",
-  new: "Nouveau",
-  contacted: "Contacté",
-  interested: "Intéressé",
-  not_interested: "Pas int.",
-  closed: "Conclu",
-};
+import { Status, STATUS_FILTERS, STATUS_LABELS } from "@/constants/statuses";
 
 export default function ContactsScreen() {
   const colorScheme = useColorScheme();

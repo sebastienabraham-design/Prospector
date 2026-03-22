@@ -18,25 +18,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useCreateContact } from "@/hooks/useContacts";
-
-type Status = "new" | "contacted" | "interested" | "not_interested" | "closed";
-type PropertyType = "house" | "apartment" | "land" | "commercial" | "other";
-
-const STATUS_OPTIONS: { value: Status; label: string; color: string }[] = [
-  { value: "new", label: "Nouveau", color: "#3B82F6" },
-  { value: "contacted", label: "Contacté", color: "#F59E0B" },
-  { value: "interested", label: "Intéressé", color: "#10B981" },
-  { value: "not_interested", label: "Pas intéressé", color: "#EF4444" },
-  { value: "closed", label: "Conclu", color: "#8B5CF6" },
-];
-
-const PROPERTY_OPTIONS: { value: PropertyType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { value: "house", label: "Maison", icon: "home" },
-  { value: "apartment", label: "Appartement", icon: "business" },
-  { value: "land", label: "Terrain", icon: "leaf" },
-  { value: "commercial", label: "Commercial", icon: "storefront" },
-  { value: "other", label: "Autre", icon: "cube" },
-];
+import { Status, STATUS_OPTIONS } from "@/constants/statuses";
+import { PropertyType, PROPERTY_OPTIONS } from "@/constants/propertyTypes";
 
 export default function AddContactScreen() {
   const colorScheme = useColorScheme();

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -16,16 +16,7 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useContacts } from "@/hooks/useContacts";
 import type { Contact } from "@workspace/api-client-react";
-
-type Status = Contact["status"];
-
-const STATUS_COLORS: Record<Status, string> = {
-  new: "#3B82F6",
-  contacted: "#F59E0B",
-  interested: "#10B981",
-  not_interested: "#EF4444",
-  closed: "#8B5CF6",
-};
+import { Status, STATUS_COLORS, STATUS_FILTERS, STATUS_LABELS } from "@/constants/statuses";
 
 const COTES_DARMOR_REGION = {
   latitude: 48.5,
@@ -34,28 +25,17 @@ const COTES_DARMOR_REGION = {
   longitudeDelta: 0.5,
 };
 
-type FilterStatus = Status | "all";
-const filters: FilterStatus[] = ["all", "new", "interested", "contacted", "not_interested", "closed"];
-const filterLabels: Record<FilterStatus, string> = {
-  all: "All",
-  new: "New",
-  interested: "Interested",
-  contacted: "Contacted",
-  not_interested: "Not Int.",
-  closed: "Closed",
-};
-
 export default function MapScreen() {
   const colorScheme = useColorScheme();
   const colors = colorScheme === "dark" ? Colors.dark : Colors.light;
   const insets = useSafeAreaInsets();
   const { data: contacts, isLoading } = useContacts();
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [filter, setFilter] = useState<FilterStatus>("all");
+  const [filter, setFilter] = useState<Status | "all">("all");
 
-  const filteredContacts = (contacts ?? []).filter(
-    (c) => filter === "all" || c.status === filter
-  );
+  const filteredContacts = useMemo(() => {
+    return (contacts ?? []).filter((c) => filter === "all" || c.status === filter);
+  }, [contacts, filter]);
 
   const handleMapPress = useCallback(
     async (e: { nativeEvent: { coordinate: { latitude: number; longitude: number } } }) => {
@@ -75,7 +55,7 @@ export default function MapScreen() {
         style={styles.map}
         provider={PROVIDER_DEFAULT}
         initialRegion={COTES_DARMOR_REGION}
-        onPress={handleMapPress}
+        onLongPress={handleMapPress}
         showsUserLocation
         showsMyLocationButton={false}
         mapType={Platform.OS === "ios" && colorScheme === "dark" ? "mutedStandard" : "standard"}
@@ -132,7 +112,7 @@ export default function MapScreen() {
 
       {/* Filter row */}
       <View style={[styles.filterRow, { top: insets.top + 62 }]}>
-        {filters.map((f) => (
+        {STATUS_FILTERS.map((f) => (
           <Pressable
             key={f}
             onPress={() => {
@@ -156,7 +136,7 @@ export default function MapScreen() {
                 { color: filter === f ? "white" : colors.textSecondary },
               ]}
             >
-              {filterLabels[f]}
+              {STATUS_LABELS[f]}
             </Text>
           </Pressable>
         ))}

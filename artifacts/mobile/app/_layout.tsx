@@ -16,11 +16,20 @@ import { setBaseUrl } from "@workspace/api-client-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
+const apiDomain = process.env.EXPO_PUBLIC_DOMAIN || "localhost:3000";
+setBaseUrl(apiDomain.startsWith("http") ? apiDomain : `https://${apiDomain}`);
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function RootLayoutNav() {
   return (

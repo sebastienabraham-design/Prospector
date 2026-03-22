@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, boolean, timestamp, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { contactsTable } from "./contacts";
@@ -21,7 +21,10 @@ export const actionsTable = pgTable("actions", {
   actionType: actionTypeEnum("action_type").notNull().default("call"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("action_contact_id_idx").on(table.contactId),
+  index("action_due_date_idx").on(table.dueDate),
+]);
 
 export const insertActionSchema = createInsertSchema(actionsTable).omit({
   id: true,

@@ -1,34 +1,24 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, contactsTable } from "@workspace/db";
-import { z } from "zod";
+import { CreateContactBody, UpdateContactBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-const statusValues = ["new", "contacted", "interested", "not_interested", "closed"] as const;
-
-const createContactSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().nullish(),
-  email: z.string().nullish(),
-  address: z.string().nullish(),
-  latitude: z.number(),
-  longitude: z.number(),
-  status: z.enum(statusValues).default("new"),
-  notes: z.string().nullish(),
-  propertyType: z.string().nullish(),
-});
-
-const updateContactSchema = createContactSchema.partial();
+function formatContact(contact: typeof contactsTable.$inferSelect) {
+  return {
+    ...contact,
+    createdAt: contact.createdAt.toISOString(),
+    updatedAt: contact.updatedAt.toISOString(),
+  };
+}
 
 router.get("/", async (req, res) => {
   try {
-    const contacts = await db.select().from(contactsTable).orderBy(contactsTable.createdAt);
-    res.json(contacts.map(c => ({
-      ...c,
-      createdAt: c.createdAt.toISOString(),
-      updatedAt: c.updatedAt.toISOString(),
-    })));
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+    const contacts = await db.select().from(contactsTable).orderBy(contactsTable.createdAt).limit(limit).offset(offset);
+    res.json(contacts.map(formatContact));
   } catch (err) {
     req.log.error({ err }, "Failed to list contacts");
     res.status(500).json({ error: "Internal server error" });
@@ -37,7 +27,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const parsed = createContactSchema.safeParse(req.body);
+    const parsed = CreateContactBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.message });
       return;
@@ -50,11 +40,7 @@ router.post("/", async (req, res) => {
       notes: parsed.data.notes ?? null,
       propertyType: parsed.data.propertyType ?? null,
     }).returning();
-    res.status(201).json({
-      ...contact,
-      createdAt: contact.createdAt.toISOString(),
-      updatedAt: contact.updatedAt.toISOString(),
-    });
+    res.status(201).json(formatContact(contact));
   } catch (err) {
     req.log.error({ err }, "Failed to create contact");
     res.status(500).json({ error: "Internal server error" });
@@ -73,11 +59,7 @@ router.get("/:id", async (req, res) => {
       res.status(404).json({ error: "Contact not found" });
       return;
     }
-    res.json({
-      ...contact,
-      createdAt: contact.createdAt.toISOString(),
-      updatedAt: contact.updatedAt.toISOString(),
-    });
+    res.json(formatContact(contact));
   } catch (err) {
     req.log.error({ err }, "Failed to get contact");
     res.status(500).json({ error: "Internal server error" });
@@ -91,7 +73,7 @@ router.put("/:id", async (req, res) => {
       res.status(400).json({ error: "Invalid ID" });
       return;
     }
-    const parsed = updateContactSchema.safeParse(req.body);
+    const parsed = UpdateContactBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.message });
       return;
@@ -104,11 +86,7 @@ router.put("/:id", async (req, res) => {
       res.status(404).json({ error: "Contact not found" });
       return;
     }
-    res.json({
-      ...contact,
-      createdAt: contact.createdAt.toISOString(),
-      updatedAt: contact.updatedAt.toISOString(),
-    });
+    res.json(formatContact(contact));
   } catch (err) {
     req.log.error({ err }, "Failed to update contact");
     res.status(500).json({ error: "Internal server error" });

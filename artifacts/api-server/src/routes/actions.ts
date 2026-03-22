@@ -35,11 +35,13 @@ function formatAction(action: typeof actionsTable.$inferSelect) {
 router.get("/", async (req, res) => {
   try {
     const contactId = req.query.contactId ? parseInt(req.query.contactId as string) : undefined;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
     let query = db.select().from(actionsTable).$dynamic();
     if (contactId && !isNaN(contactId)) {
       query = query.where(eq(actionsTable.contactId, contactId));
     }
-    const actions = await query.orderBy(actionsTable.dueDate);
+    const actions = await query.orderBy(actionsTable.dueDate).limit(limit).offset(offset);
     res.json(actions.map(formatAction));
   } catch (err) {
     req.log.error({ err }, "Failed to list actions");
@@ -80,7 +82,7 @@ router.put("/:id", async (req, res) => {
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const data: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };
+    const data: Partial<typeof actionsTable.$inferInsert> = { ...parsed.data, updatedAt: new Date() } as any;
     if (parsed.data.dueDate !== undefined) {
       data.dueDate = parsed.data.dueDate ? new Date(parsed.data.dueDate) : null;
     }

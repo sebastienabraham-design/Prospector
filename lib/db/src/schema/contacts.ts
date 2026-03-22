@@ -1,4 +1,4 @@
-import { pgTable, serial, text, doublePrecision, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, doublePrecision, timestamp, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -23,7 +23,10 @@ export const contactsTable = pgTable("contacts", {
   propertyType: text("property_type"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("contact_status_idx").on(table.status),
+  index("contact_created_at_idx").on(table.createdAt),
+]);
 
 export const insertContactSchema = createInsertSchema(contactsTable).omit({
   id: true,

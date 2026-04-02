@@ -3,8 +3,12 @@ import * as Sharing from "expo-sharing";
 import { Alert, Platform } from "react-native";
 import type { Contact, Action } from "@workspace/api-client-react";
 import { STATUS_LABELS } from "@/constants/statuses";
-import { PROPERTY_TYPE_LABELS } from "@/constants/propertyTypes";
+import { PROPERTY_OPTIONS } from "@/constants/propertyTypes";
 import type { Status } from "@/constants/statuses";
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  PROPERTY_OPTIONS.map((p) => [p.value, p.label])
+);
 
 // BOM for Excel to detect UTF-8
 const UTF8_BOM = "\uFEFF";

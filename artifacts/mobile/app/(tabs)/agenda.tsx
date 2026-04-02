@@ -18,6 +18,7 @@ import Colors from "@/constants/colors";
 import { useActions, useContacts, useUpdateAction, useDeleteAction } from "@/hooks/useContacts";
 import { ActionItem } from "@/components/ActionItem";
 import type { Action } from "@workspace/api-client-react";
+import { actionsToCsv, exportAndShare } from "@/lib/export";
 
 type Filter = "all" | "upcoming" | "overdue" | "completed";
 
@@ -107,6 +108,17 @@ export default function AgendaScreen() {
     setRefreshing(false);
   };
 
+  const handleExport = async () => {
+    if (!filtered || filtered.length === 0) {
+      Alert.alert("Aucune donnée", "Aucune action à exporter.");
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const csv = actionsToCsv(filtered, contactMap);
+    const date = new Date().toISOString().slice(0, 10);
+    await exportAndShare(csv, `agenda_${date}.csv`);
+  };
+
   const handleToggle = (action: Action) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     updateAction.mutate({ id: action.id, data: { completed: !action.completed } });
@@ -157,15 +169,23 @@ export default function AgendaScreen() {
         ]}
       >
         <View style={styles.headerTop}>
-          <Text style={[styles.title, { color: colors.text }]}>Agenda</Text>
-          {stats.overdue > 0 && (
-            <View style={[styles.overdueChip, { backgroundColor: colors.statusNotInterested + "22" }]}>
-              <Ionicons name="alert-circle" size={13} color={colors.statusNotInterested} />
-              <Text style={[styles.overdueText, { color: colors.statusNotInterested }]}>
-                {stats.overdue} en retard
-              </Text>
-            </View>
-          )}
+          <View style={styles.headerLeft}>
+            <Text style={[styles.title, { color: colors.text }]}>Agenda</Text>
+            {stats.overdue > 0 && (
+              <View style={[styles.overdueChip, { backgroundColor: colors.statusNotInterested + "22" }]}>
+                <Ionicons name="alert-circle" size={13} color={colors.statusNotInterested} />
+                <Text style={[styles.overdueText, { color: colors.statusNotInterested }]}>
+                  {stats.overdue} en retard
+                </Text>
+              </View>
+            )}
+          </View>
+          <Pressable
+            onPress={handleExport}
+            style={[styles.exportBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
+          >
+            <Ionicons name="download-outline" size={18} color={colors.tint} />
+          </Pressable>
         </View>
 
         <View style={styles.statsRow}>
@@ -286,7 +306,20 @@ const styles = StyleSheet.create({
   headerTop: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
+  },
+  exportBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
   },
   title: {
     fontSize: 28,

@@ -8,13 +8,16 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { setBaseUrl } from "@workspace/api-client-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SyncStatusBar } from "@/components/SyncStatusBar";
+import { initDatabase } from "@/lib/database";
+import { SyncProvider } from "@/lib/sync-manager";
 
 const apiDomain = process.env.EXPO_PUBLIC_DOMAIN || "localhost:3000";
 setBaseUrl(apiDomain.startsWith("http") ? apiDomain : `https://${apiDomain}`);
@@ -62,24 +65,32 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const [dbReady, setDbReady] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    initDatabase().then(() => setDbReady(true));
+  }, []);
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && dbReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, dbReady]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if ((!fontsLoaded && !fontError) || !dbReady) return null;
 
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView>
-            <KeyboardProvider>
-              <RootLayoutNav />
-            </KeyboardProvider>
-          </GestureHandlerRootView>
+          <SyncProvider>
+            <GestureHandlerRootView>
+              <KeyboardProvider>
+                <SyncStatusBar />
+                <RootLayoutNav />
+              </KeyboardProvider>
+            </GestureHandlerRootView>
+          </SyncProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

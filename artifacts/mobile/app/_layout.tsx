@@ -69,9 +69,18 @@ export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
 
   useEffect(() => {
-    initDatabase().then(() => setDbReady(true));
+    console.log("[boot] initDatabase start");
+    initDatabase()
+      .then(() => {
+        console.log("[boot] initDatabase done");
+        setDbReady(true);
+      })
+      .catch((err) => {
+        console.warn("[boot] initDatabase failed — unblocking UI", err);
+        setDbReady(true);
+      });
     initNotifications().catch((err) => {
-      console.warn("[notifications] init failed", err);
+      console.warn("[boot] initNotifications failed", err);
     });
   }, []);
 

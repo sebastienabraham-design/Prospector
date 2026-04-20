@@ -4,42 +4,60 @@ import { router } from "expo-router";
 
 const CHANNEL_ID = "reminders";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+} catch (err) {
+  console.warn("[notifications] setNotificationHandler failed", err);
+}
 
 let initialized = false;
 
 export async function initNotifications(): Promise<void> {
   if (initialized) return;
   initialized = true;
+  console.log("[notifications] init start");
 
-  const existing = await Notifications.getPermissionsAsync();
-  if (existing.status !== "granted") {
-    await Notifications.requestPermissionsAsync();
+  try {
+    const existing = await Notifications.getPermissionsAsync();
+    if (existing.status !== "granted") {
+      await Notifications.requestPermissionsAsync();
+    }
+  } catch (err) {
+    console.warn("[notifications] permissions failed", err);
   }
 
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-      name: "Relances prospects",
-      importance: Notifications.AndroidImportance.HIGH,
-      sound: "default",
-      vibrationPattern: [0, 250, 250, 250],
-      enableVibrate: true,
-    });
+    try {
+      await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+        name: "Relances prospects",
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: "default",
+        vibrationPattern: [0, 250, 250, 250],
+        enableVibrate: true,
+      });
+    } catch (err) {
+      console.warn("[notifications] setNotificationChannel failed", err);
+    }
   }
 
-  Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as { contactId?: number };
-    if (data?.contactId) {
-      router.push(`/contact/${data.contactId}` as never);
-    }
-  });
+  try {
+    Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { contactId?: number };
+      if (data?.contactId) {
+        router.push(`/contact/${data.contactId}` as never);
+      }
+    });
+  } catch (err) {
+    console.warn("[notifications] addListener failed", err);
+  }
+  console.log("[notifications] init done");
 }
 
 function identifierForAction(actionId: number): string {

@@ -8,11 +8,25 @@ import type {
 
 let db: SQLite.SQLiteDatabase | null = null;
 
+const SCHEMA_VERSION = 2;
+
 export function getDb(): SQLite.SQLiteDatabase {
   if (!db) {
     db = SQLite.openDatabaseSync("prospector.db");
   }
   return db;
+}
+
+export function assertValidCoordinates(latitude: number, longitude: number): void {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    throw new Error(`Invalid coordinates: latitude=${latitude}, longitude=${longitude}`);
+  }
+  if (latitude < -90 || latitude > 90) {
+    throw new Error(`Latitude out of range [-90, 90]: ${latitude}`);
+  }
+  if (longitude < -180 || longitude > 180) {
+    throw new Error(`Longitude out of range [-180, 180]: ${longitude}`);
+  }
 }
 
 export async function initDatabase(): Promise<void> {
@@ -33,6 +47,8 @@ export async function initDatabase(): Promise<void> {
       status TEXT NOT NULL DEFAULT 'new',
       notes TEXT,
       property_type TEXT,
+      objections TEXT,
+      next_follow_up_date TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       _local_only INTEGER NOT NULL DEFAULT 0,
@@ -95,6 +111,24 @@ export async function initDatabase(): Promise<void> {
       "INSERT INTO sync_meta (key, value) VALUES ('next_local_id', '-1')"
     );
   }
+
+  // Schema migrations — each block runs once per version bump.
+  const versionRow = database.getFirstSync<{ value: string }>(
+    "SELECT value FROM sync_meta WHERE key = 'schema_version'"
+  );
+  const currentVersion = versionRow ? parseInt(versionRow.value, 10) : 1;
+
+  if (currentVersion < 2) {
+    // v2: prospect pipeline fields on contacts.
+    // Existing DBs: add columns (CREATE TABLE IF NOT EXISTS skipped them).
+    try { database.execSync("ALTER TABLE contacts ADD COLUMN objections TEXT"); } catch { /* column already exists on fresh DB */ }
+    try { database.execSync("ALTER TABLE contacts ADD COLUMN next_follow_up_date TEXT"); } catch { /* column already exists on fresh DB */ }
+  }
+
+  database.runSync(
+    "INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('schema_version', ?)",
+    [String(SCHEMA_VERSION)]
+  );
 }
 
 export function getNextLocalId(): number {
@@ -213,6 +247,7 @@ export function insertContact(data: {
   propertyType?: string | null;
   localOnly: boolean;
 }): Contact {
+  assertValidCoordinates(data.latitude, data.longitude);
   const database = getDb();
   const now = new Date().toISOString();
   database.runSync(
@@ -241,6 +276,11 @@ export function updateContactInDb(
   id: number,
   data: Record<string, unknown>
 ): Contact | null {
+  if ("latitude" in data || "longitude" in data) {
+    const lat = data.latitude ?? 0;
+    const lng = data.longitude ?? 0;
+    assertValidCoordinates(lat as number, lng as number);
+  }
   const database = getDb();
   const now = new Date().toISOString();
 

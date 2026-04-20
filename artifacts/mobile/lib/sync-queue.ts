@@ -69,9 +69,13 @@ export function enqueueMutation(
     db.runSync("DELETE FROM sync_queue WHERE id = ?", [existing.id]);
     // Also hard-delete the local record since it was never synced
     if (entityType === "contact") {
-      // Delete associated actions first
+      // Purge sync_queue action entries BEFORE deleting actions,
+      // otherwise the subquery on `actions` returns empty.
+      db.runSync(
+        "DELETE FROM sync_queue WHERE entity_type = 'action' AND entity_id IN (SELECT id FROM actions WHERE contact_id = ?)",
+        [entityId]
+      );
       db.runSync("DELETE FROM actions WHERE contact_id = ?", [entityId]);
-      db.runSync("DELETE FROM sync_queue WHERE entity_type = 'action' AND entity_id IN (SELECT id FROM actions WHERE contact_id = ?)", [entityId]);
       db.runSync("DELETE FROM contacts WHERE id = ?", [entityId]);
     } else {
       db.runSync("DELETE FROM actions WHERE id = ?", [entityId]);

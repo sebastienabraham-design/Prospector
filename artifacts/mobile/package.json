@@ -58,6 +58,6 @@
   "dependencies": {
     "@nkzw/create-context-hook": "^1.1.0",
     "react-native-maps": "1.18.0",
-    "@react-native-community/netinfo": "~12.0.5"
+    "@react-native-community/netinfo": "~12.0.1"
   }
 }

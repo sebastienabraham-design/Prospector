@@ -15,7 +15,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingView } from "react-native";
 import Colors from "@/constants/colors";
 import {
   useContact,
@@ -253,12 +253,15 @@ export default function ContactDetailScreen() {
         </View>
       </View>
 
-      <KeyboardAwareScrollView
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+      <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        bottomOffset={20}
       >
         {/* Avatar + status */}
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -536,7 +539,8 @@ export default function ContactDetailScreen() {
         </Text>
 
         <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 16 }} />
-      </KeyboardAwareScrollView>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

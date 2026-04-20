@@ -17,8 +17,9 @@ import { setBaseUrl } from "@workspace/api-client-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { initDatabase } from "@/lib/database";
-import { initNotifications } from "@/lib/notifications";
 import { SyncProvider } from "@/lib/sync-manager";
+
+console.log("[boot] _layout module evaluated");
 
 const apiDomain = process.env.EXPO_PUBLIC_DOMAIN || "localhost:3000";
 setBaseUrl(apiDomain.startsWith("http") ? apiDomain : `https://${apiDomain}`);
@@ -60,6 +61,7 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  console.log("[boot] RootLayout render");
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -79,9 +81,14 @@ export default function RootLayout() {
         console.warn("[boot] initDatabase failed — unblocking UI", err);
         setDbReady(true);
       });
-    initNotifications().catch((err) => {
-      console.warn("[boot] initNotifications failed", err);
-    });
+    (async () => {
+      try {
+        const mod = await import("@/lib/notifications");
+        await mod.initNotifications();
+      } catch (err) {
+        console.warn("[boot] notifications module load failed", err);
+      }
+    })();
   }, []);
 
   useEffect(() => {

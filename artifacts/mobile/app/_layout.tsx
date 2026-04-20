@@ -17,6 +17,7 @@ import { setBaseUrl } from "@workspace/api-client-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { initDatabase } from "@/lib/database";
+import { initNotifications } from "@/lib/notifications";
 import { SyncProvider } from "@/lib/sync-manager";
 
 const apiDomain = process.env.EXPO_PUBLIC_DOMAIN || "localhost:3000";
@@ -69,6 +70,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     initDatabase().then(() => setDbReady(true));
+    initNotifications().catch((err) => {
+      console.warn("[notifications] init failed", err);
+    });
   }, []);
 
   useEffect(() => {

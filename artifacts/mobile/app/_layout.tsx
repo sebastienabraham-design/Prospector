@@ -10,7 +10,6 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { setBaseUrl } from "@workspace/api-client-react";
 
@@ -105,10 +104,8 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <SyncProvider>
             <GestureHandlerRootView>
-              <KeyboardProvider>
-                <SyncStatusBar />
-                <RootLayoutNav />
-              </KeyboardProvider>
+              <SyncStatusBar />
+              <RootLayoutNav />
             </GestureHandlerRootView>
           </SyncProvider>
         </QueryClientProvider>

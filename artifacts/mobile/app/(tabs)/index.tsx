@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
-import MapView, { Marker, Callout, PROVIDER_DEFAULT } from "react-native-maps";
+import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,8 +63,17 @@ export default function MapScreen() {
     return (contacts ?? []).filter((c) => filter === "all" || c.status === filter);
   }, [contacts, filter]);
 
+  const selectedContact = useMemo(
+    () => (contacts ?? []).find((c) => c.id === selectedId) ?? null,
+    [contacts, selectedId]
+  );
+
   const handleMapPress = useCallback(
     async (e: { nativeEvent: { coordinate: { latitude: number; longitude: number } } }) => {
+      if (selectedId !== null) {
+        setSelectedId(null);
+        return;
+      }
       const { latitude, longitude } = e.nativeEvent.coordinate;
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       router.push({
@@ -72,7 +81,7 @@ export default function MapScreen() {
         params: { lat: latitude, lng: longitude },
       });
     },
-    []
+    [selectedId]
   );
 
   return (
@@ -102,25 +111,6 @@ export default function MapScreen() {
               <View style={[styles.pin, isSelected && styles.pinSelected, { backgroundColor: pinColor }]}>
                 <Ionicons name="person" size={isSelected ? 16 : 12} color="white" />
               </View>
-              <Callout
-                tooltip
-                onPress={() =>
-                  router.push({ pathname: "/contact/[id]", params: { id: contact.id } })
-                }
-              >
-                <View style={styles.callout}>
-                  <Text style={styles.calloutName} numberOfLines={1}>
-                    {contact.name || "(Sans nom)"}
-                  </Text>
-                  {contact.address ? (
-                    <Text style={styles.calloutAddress} numberOfLines={2}>
-                      {contact.address}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.calloutTap}>Appuyer pour ouvrir →</Text>
-                  <View style={styles.calloutArrow} />
-                </View>
-              </Callout>
             </Marker>
           );
         })}
@@ -191,13 +181,48 @@ export default function MapScreen() {
         </Pressable>
       </View>
 
-      {/* Hint */}
-      <View style={[styles.hint, { bottom: insets.bottom + 90, left: 16 }]}>
-        <View style={[styles.hintCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
-          <Ionicons name="finger-print-outline" size={13} color={colors.textSecondary} />
-          <Text style={[styles.hintText, { color: colors.textSecondary }]}>Appuyer pour ajouter</Text>
+      {/* Hint (quand aucun pin sélectionné) */}
+      {!selectedContact ? (
+        <View style={[styles.hint, { bottom: insets.bottom + 90, left: 16 }]}>
+          <View style={[styles.hintCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
+            <Ionicons name="finger-print-outline" size={13} color={colors.textSecondary} />
+            <Text style={[styles.hintText, { color: colors.textSecondary }]}>Appuyer pour ajouter</Text>
+          </View>
         </View>
-      </View>
+      ) : null}
+
+      {/* Carte info quand un pin est sélectionné */}
+      {selectedContact ? (
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: "/contact/[id]", params: { id: selectedContact.id } })
+          }
+          style={[
+            styles.infoCard,
+            {
+              bottom: insets.bottom + 80,
+              backgroundColor: colors.card,
+              shadowColor: colors.shadow,
+              borderLeftColor: STATUS_COLORS[selectedContact.status as Status] ?? colors.tint,
+            },
+          ]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.infoName, { color: colors.text }]} numberOfLines={1}>
+              {selectedContact.name || "(Sans nom)"}
+            </Text>
+            {selectedContact.address ? (
+              <Text style={[styles.infoAddress, { color: colors.textSecondary }]} numberOfLines={1}>
+                {selectedContact.address}
+              </Text>
+            ) : null}
+            <Text style={[styles.infoStatus, { color: STATUS_COLORS[selectedContact.status as Status] ?? colors.tint }]}>
+              {STATUS_LABELS[selectedContact.status as Status] ?? selectedContact.status}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -259,37 +284,23 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   pinSelected: { width: 42, height: 42, borderRadius: 21 },
-  callout: {
-    backgroundColor: "white",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    minWidth: 160,
-    maxWidth: 220,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 5,
-    marginBottom: 8,
-  },
-  calloutName: { fontSize: 14, fontWeight: "600", color: "#000" },
-  calloutAddress: { fontSize: 12, color: "#666", marginTop: 2 },
-  calloutTap: { fontSize: 11, color: "#3B82F6", marginTop: 6, fontWeight: "500" },
-  calloutArrow: {
+  infoCard: {
     position: "absolute",
-    bottom: -6,
-    left: "50%",
-    marginLeft: -6,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: "white",
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 14,
+    borderLeftWidth: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
+  infoName: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  infoAddress: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
+  infoStatus: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 4 },
   fab: {
     position: "absolute",
     right: 16,

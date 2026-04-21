@@ -16,7 +16,41 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { KeyboardAvoidingView } from "react-native";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import Colors from "@/constants/colors";
+
+function formatDateFR(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function openDateTimePicker(currentIso: string, onPick: (iso: string) => void): void {
+  const initial = currentIso ? new Date(currentIso) : new Date();
+  if (Platform.OS === "android") {
+    DateTimePickerAndroid.open({
+      value: initial,
+      mode: "date",
+      minimumDate: new Date(),
+      onChange: (evt, date) => {
+        if (evt.type !== "set" || !date) return;
+        DateTimePickerAndroid.open({
+          value: date,
+          mode: "time",
+          is24Hour: true,
+          onChange: (evt2, time) => {
+            if (evt2.type !== "set" || !time) return;
+            const merged = new Date(date);
+            merged.setHours(time.getHours(), time.getMinutes(), 0, 0);
+            onPick(merged.toISOString());
+          },
+        });
+      },
+    });
+  }
+}
 import {
   useContact,
   useUpdateContact,
@@ -42,11 +76,11 @@ const STATUS_OPTIONS: { value: Status; label: string; color: string }[] = [
 ];
 
 const ACTION_TYPES: { value: ActionType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { value: "call", label: "Call", icon: "call" },
-  { value: "visit", label: "Visit", icon: "home" },
+  { value: "call", label: "Appel", icon: "call" },
+  { value: "visit", label: "Visite", icon: "home" },
   { value: "email", label: "Email", icon: "mail" },
-  { value: "meeting", label: "Meeting", icon: "people" },
-  { value: "other", label: "Other", icon: "ellipsis-horizontal-circle" },
+  { value: "meeting", label: "RDV", icon: "people" },
+  { value: "other", label: "Autre", icon: "ellipsis-horizontal-circle" },
 ];
 
 export default function ContactDetailScreen() {
@@ -108,18 +142,18 @@ export default function ContactDetailScreen() {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setEditing(false);
     } catch (err) {
-      Alert.alert("Error", "Failed to save changes.");
+      Alert.alert("Erreur", "Impossible d'enregistrer les modifications.");
     }
   };
 
   const handleDelete = () => {
     Alert.alert(
-      "Delete Contact",
-      "This will also delete all follow-up actions. This cannot be undone.",
+      "Supprimer le contact",
+      "Toutes les actions de suivi seront aussi supprimées. Action irréversible.",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Annuler", style: "cancel" },
         {
-          text: "Delete",
+          text: "Supprimer",
           style: "destructive",
           onPress: async () => {
             await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -148,7 +182,7 @@ export default function ContactDetailScreen() {
       setActionDesc("");
       setActionType("call");
     } catch (err) {
-      Alert.alert("Error", "Failed to add action.");
+      Alert.alert("Erreur", "Impossible d'ajouter l'action.");
     }
   };
 
@@ -158,10 +192,10 @@ export default function ContactDetailScreen() {
   };
 
   const handleDeleteAction = (actionId: number) => {
-    Alert.alert("Delete Action", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("Supprimer l'action", "Êtes-vous sûr ?", [
+      { text: "Annuler", style: "cancel" },
       {
-        text: "Delete",
+        text: "Supprimer",
         style: "destructive",
         onPress: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -189,9 +223,9 @@ export default function ContactDetailScreen() {
   if (!contact) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Contact not found</Text>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Contact introuvable</Text>
         <Pressable onPress={() => router.back()} style={[styles.backBtn, { borderColor: colors.border }]}>
-          <Text style={{ color: colors.tint, fontFamily: "Inter_600SemiBold" }}>Go Back</Text>
+          <Text style={{ color: colors.tint, fontFamily: "Inter_600SemiBold" }}>Retour</Text>
         </Pressable>
       </View>
     );
@@ -236,7 +270,7 @@ export default function ContactDetailScreen() {
           ) : (
             <>
               <Pressable onPress={() => setEditing(false)} hitSlop={8} style={styles.headerBtn}>
-                <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
+                <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Annuler</Text>
               </Pressable>
               <Pressable
                 onPress={saveEdits}
@@ -245,7 +279,7 @@ export default function ContactDetailScreen() {
                 {updateContact.isPending ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text style={styles.saveChipText}>Save</Text>
+                  <Text style={styles.saveChipText}>Enregistrer</Text>
                 )}
               </Pressable>
             </>
@@ -288,7 +322,7 @@ export default function ContactDetailScreen() {
         {/* Status selector (edit mode) */}
         {editing && (
           <View style={[styles.section, { borderColor: colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Status</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Statut</Text>
             <View style={styles.chipRow}>
               {STATUS_OPTIONS.map((opt) => (
                 <Pressable
@@ -318,7 +352,7 @@ export default function ContactDetailScreen() {
 
         {/* Contact info */}
         <View style={[styles.section, { borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Contact Info</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Coordonnées</Text>
 
           <View style={styles.infoGrid}>
             <InfoRow
@@ -360,7 +394,7 @@ export default function ContactDetailScreen() {
               <View style={styles.infoRow}>
                 <Ionicons name="navigate" size={15} color={colors.textSecondary} />
                 <View>
-                  <Text style={[labelStyle, { fontSize: 11 }]}>Coordinates</Text>
+                  <Text style={[labelStyle, { fontSize: 11 }]}>Coordonnées GPS</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>
                     {contact.latitude.toFixed(5)}, {contact.longitude.toFixed(5)}
                   </Text>
@@ -371,7 +405,7 @@ export default function ContactDetailScreen() {
               <View style={styles.infoRow}>
                 <Ionicons name="home" size={15} color={colors.textSecondary} />
                 <View>
-                  <Text style={[labelStyle, { fontSize: 11 }]}>Property Type</Text>
+                  <Text style={[labelStyle, { fontSize: 11 }]}>Type de bien</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]} style={{ textTransform: "capitalize" }}>
                     {contact.propertyType}
                   </Text>
@@ -431,7 +465,7 @@ export default function ContactDetailScreen() {
                 { backgroundColor: colors.background, borderColor: colors.border },
               ]}
             >
-              <Text style={[labelStyle, { marginBottom: 4 }]}>Action Type</Text>
+              <Text style={[labelStyle, { marginBottom: 4 }]}>Type d'action</Text>
               <View style={styles.chipRow}>
                 {ACTION_TYPES.map((t) => (
                   <Pressable
@@ -464,30 +498,36 @@ export default function ContactDetailScreen() {
                 ))}
               </View>
 
-              <Text style={[labelStyle, { marginTop: 10, marginBottom: 4 }]}>Title *</Text>
+              <Text style={[labelStyle, { marginTop: 10, marginBottom: 4 }]}>Titre *</Text>
               <TextInput
                 style={[inputStyle, { backgroundColor: colors.backgroundSecondary }]}
                 value={actionTitle}
                 onChangeText={setActionTitle}
-                placeholder="Call to schedule a visit"
+                placeholder="Appeler pour fixer un rendez-vous"
                 placeholderTextColor={colors.textSecondary}
               />
 
-              <Text style={[labelStyle, { marginTop: 10, marginBottom: 4 }]}>Due Date</Text>
-              <TextInput
-                style={[inputStyle, { backgroundColor: colors.backgroundSecondary }]}
-                value={actionDate}
-                onChangeText={setActionDate}
-                placeholder="2026-03-25T10:00:00"
-                placeholderTextColor={colors.textSecondary}
-              />
+              <Text style={[labelStyle, { marginTop: 10, marginBottom: 4 }]}>Échéance</Text>
+              <Pressable
+                onPress={() => openDateTimePicker(actionDate, setActionDate)}
+                style={[inputStyle, { backgroundColor: colors.backgroundSecondary, justifyContent: "center" }]}
+              >
+                <Text style={{ color: actionDate ? colors.text : colors.textSecondary, fontFamily: "Inter_400Regular" }}>
+                  {actionDate ? formatDateFR(actionDate) : "Choisir date et heure"}
+                </Text>
+              </Pressable>
+              {actionDate ? (
+                <Pressable onPress={() => setActionDate("")} style={{ alignSelf: "flex-end", marginTop: 4 }}>
+                  <Text style={{ color: colors.tint, fontSize: 12, fontFamily: "Inter_500Medium" }}>Effacer</Text>
+                </Pressable>
+              ) : null}
 
               <Text style={[labelStyle, { marginTop: 10, marginBottom: 4 }]}>Notes</Text>
               <TextInput
                 style={[inputStyle, styles.smallNotes, { backgroundColor: colors.backgroundSecondary }]}
                 value={actionDesc}
                 onChangeText={setActionDesc}
-                placeholder="Additional details..."
+                placeholder="Détails supplémentaires..."
                 placeholderTextColor={colors.textSecondary}
                 multiline
               />
@@ -505,7 +545,7 @@ export default function ContactDetailScreen() {
                 ) : (
                   <>
                     <Ionicons name="checkmark" size={16} color="white" />
-                    <Text style={styles.saveActionText}>Add Action</Text>
+                    <Text style={styles.saveActionText}>Ajouter l'action</Text>
                   </>
                 )}
               </Pressable>

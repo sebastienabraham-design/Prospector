@@ -14,7 +14,7 @@ function NativeTabLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "map", selected: "map.fill" }} />
-        <Label>Map</Label>
+        <Label>Carte</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="contacts">
         <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
@@ -66,7 +66,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Map",
+          title: "Carte",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="map.fill" tintColor={color} size={24} />

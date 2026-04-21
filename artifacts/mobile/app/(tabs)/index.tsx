@@ -18,11 +18,11 @@ import { useContacts } from "@/hooks/useContacts";
 import type { Contact } from "@workspace/api-client-react";
 import { Status, STATUS_COLORS, STATUS_FILTERS, STATUS_LABELS } from "@/constants/statuses";
 
-const COTES_DARMOR_REGION = {
-  latitude: 48.5,
-  longitude: -2.75,
-  latitudeDelta: 0.5,
-  longitudeDelta: 0.5,
+const PLUFUR_REGION = {
+  latitude: 48.6333,
+  longitude: -3.5333,
+  latitudeDelta: 0.08,
+  longitudeDelta: 0.08,
 };
 
 export default function MapScreen() {
@@ -54,8 +54,8 @@ export default function MapScreen() {
       <MapView
         style={styles.map}
         provider={PROVIDER_DEFAULT}
-        initialRegion={COTES_DARMOR_REGION}
-        onLongPress={handleMapPress}
+        initialRegion={PLUFUR_REGION}
+        onPress={handleMapPress}
         showsUserLocation
         showsMyLocationButton={false}
         mapType={Platform.OS === "ios" && colorScheme === "dark" ? "mutedStandard" : "standard"}
@@ -87,7 +87,7 @@ export default function MapScreen() {
                       {contact.address}
                     </Text>
                   ) : null}
-                  <Text style={styles.calloutTap}>Tap to open →</Text>
+                  <Text style={styles.calloutTap}>Appuyer pour ouvrir →</Text>
                 </View>
               </Callout>
             </Marker>
@@ -99,7 +99,7 @@ export default function MapScreen() {
       <View style={[styles.header, { top: insets.top + 8 }]}>
         <View style={[styles.titleCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
           <Ionicons name="map" size={18} color={colors.tint} />
-          <Text style={[styles.title, { color: colors.text }]}>Prospector Map</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Carte</Text>
           {isLoading ? (
             <ActivityIndicator size="small" color={colors.tint} />
           ) : (
@@ -164,7 +164,7 @@ export default function MapScreen() {
       <View style={[styles.hint, { bottom: insets.bottom + 90, left: 16 }]}>
         <View style={[styles.hintCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
           <Ionicons name="finger-print-outline" size={13} color={colors.textSecondary} />
-          <Text style={[styles.hintText, { color: colors.textSecondary }]}>Tap map to add</Text>
+          <Text style={[styles.hintText, { color: colors.textSecondary }]}>Appuyer pour ajouter</Text>
         </View>
       </View>
     </View>

@@ -103,18 +103,22 @@ export default function MapScreen() {
                 <Ionicons name="person" size={isSelected ? 16 : 12} color="white" />
               </View>
               <Callout
+                tooltip
                 onPress={() =>
                   router.push({ pathname: "/contact/[id]", params: { id: contact.id } })
                 }
               >
                 <View style={styles.callout}>
-                  <Text style={styles.calloutName}>{contact.name}</Text>
+                  <Text style={styles.calloutName} numberOfLines={1}>
+                    {contact.name || "(Sans nom)"}
+                  </Text>
                   {contact.address ? (
-                    <Text style={styles.calloutAddress} numberOfLines={1}>
+                    <Text style={styles.calloutAddress} numberOfLines={2}>
                       {contact.address}
                     </Text>
                   ) : null}
                   <Text style={styles.calloutTap}>Appuyer pour ouvrir →</Text>
+                  <View style={styles.calloutArrow} />
                 </View>
               </Callout>
             </Marker>
@@ -255,10 +259,37 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   pinSelected: { width: 42, height: 42, borderRadius: 21 },
-  callout: { padding: 10, maxWidth: 180 },
+  callout: {
+    backgroundColor: "white",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    minWidth: 160,
+    maxWidth: 220,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+    marginBottom: 8,
+  },
   calloutName: { fontSize: 14, fontWeight: "600", color: "#000" },
   calloutAddress: { fontSize: 12, color: "#666", marginTop: 2 },
   calloutTap: { fontSize: 11, color: "#3B82F6", marginTop: 6, fontWeight: "500" },
+  calloutArrow: {
+    position: "absolute",
+    bottom: -6,
+    left: "50%",
+    marginLeft: -6,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: "white",
+  },
   fab: {
     position: "absolute",
     right: 16,

@@ -19,8 +19,8 @@ import type { Contact } from "@workspace/api-client-react";
 import { Status, STATUS_COLORS, STATUS_FILTERS, STATUS_LABELS } from "@/constants/statuses";
 
 const PLUFUR_REGION = {
-  latitude: 48.6333,
-  longitude: -3.5333,
+  latitude: 48.5897,
+  longitude: -3.4558,
   latitudeDelta: 0.08,
   longitudeDelta: 0.08,
 };

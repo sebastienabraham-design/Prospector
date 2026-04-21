@@ -16,6 +16,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import Colors from "@/constants/colors";
 import { useCreateContact } from "@/hooks/useContacts";
 import { Status, STATUS_OPTIONS } from "@/constants/statuses";
@@ -37,8 +38,34 @@ export default function AddContactScreen() {
   const [status, setStatus] = useState<Status>("new");
   const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [notes, setNotes] = useState("");
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const isValid = name.trim().length > 0 && lat.trim() !== "" && lng.trim() !== "";
+
+  const useMyLocation = async () => {
+    try {
+      setGettingLocation(true);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const { status: permStatus } = await Location.requestForegroundPermissionsAsync();
+      if (permStatus !== "granted") {
+        Alert.alert(
+          "Permission refusée",
+          "Autorisez la localisation dans les paramètres pour utiliser cette fonctionnalité."
+        );
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      setLat(String(pos.coords.latitude));
+      setLng(String(pos.coords.longitude));
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      Alert.alert("Erreur", "Impossible d'obtenir votre position. Vérifiez que le GPS est activé.");
+    } finally {
+      setGettingLocation(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!isValid) {
@@ -121,12 +148,31 @@ export default function AddContactScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Localisation */}
-        {params.lat && params.lng ? (
+        {/* Bouton "Utiliser ma position" */}
+        <Pressable
+          onPress={useMyLocation}
+          disabled={gettingLocation}
+          style={[
+            styles.locationBtn,
+            { backgroundColor: colors.tint + "15", borderColor: colors.tint },
+          ]}
+        >
+          {gettingLocation ? (
+            <ActivityIndicator size="small" color={colors.tint} />
+          ) : (
+            <Ionicons name="navigate" size={16} color={colors.tint} />
+          )}
+          <Text style={[styles.locationBtnText, { color: colors.tint }]}>
+            {gettingLocation ? "Localisation..." : "Utiliser ma position"}
+          </Text>
+        </Pressable>
+
+        {/* Coordonnées capturées */}
+        {lat && lng ? (
           <View style={[styles.locationBanner, { backgroundColor: colors.tint + "15" }]}>
             <Ionicons name="location" size={14} color={colors.tint} />
             <Text style={[styles.locationText, { color: colors.tint }]}>
-              {parseFloat(params.lat).toFixed(5)}, {parseFloat(params.lng).toFixed(5)}
+              {parseFloat(lat).toFixed(5)}, {parseFloat(lng).toFixed(5)}
             </Text>
           </View>
         ) : null}
@@ -183,8 +229,8 @@ export default function AddContactScreen() {
           />
         </View>
 
-        {/* Coordonnées (si non définies par la carte) */}
-        {(!params.lat || !params.lng) ? (
+        {/* Coordonnées (si non encore capturées par GPS ou tap carte) */}
+        {(!lat || !lng) ? (
           <View style={styles.row}>
             <View style={[styles.field, { flex: 1 }]}>
               <Text style={labelStyle}>Latitude *</Text>
@@ -342,6 +388,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     gap: 14,
+  },
+  locationBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginBottom: 10,
+  },
+  locationBtnText: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
   },
   locationBanner: {
     flexDirection: "row",

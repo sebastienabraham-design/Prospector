@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -13,14 +13,15 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import Colors from "@/constants/colors";
 import { useContacts } from "@/hooks/useContacts";
 import type { Contact } from "@workspace/api-client-react";
 import { Status, STATUS_COLORS, STATUS_FILTERS, STATUS_LABELS } from "@/constants/statuses";
 
 const PLUFUR_REGION = {
-  latitude: 48.5897,
-  longitude: -3.4558,
+  latitude: 48.5977,
+  longitude: -3.5464,
   latitudeDelta: 0.08,
   longitudeDelta: 0.08,
 };
@@ -32,6 +33,31 @@ export default function MapScreen() {
   const { data: contacts, isLoading } = useContacts();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filter, setFilter] = useState<Status | "all">("all");
+  const mapRef = useRef<MapView | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") return;
+        const pos = await Location.getLastKnownPositionAsync();
+        const coords = pos ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+        if (coords) {
+          mapRef.current?.animateToRegion(
+            {
+              latitude: coords.coords.latitude,
+              longitude: coords.coords.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            },
+            800
+          );
+        }
+      } catch {
+        // Ignore — fallback to PLUFUR_REGION
+      }
+    })();
+  }, []);
 
   const filteredContacts = useMemo(() => {
     return (contacts ?? []).filter((c) => filter === "all" || c.status === filter);
@@ -52,6 +78,7 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         provider={PROVIDER_DEFAULT}
         initialRegion={PLUFUR_REGION}

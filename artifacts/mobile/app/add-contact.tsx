@@ -39,6 +39,7 @@ export default function AddContactScreen() {
   const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [notes, setNotes] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
 
   const isValid = name.trim().length > 0 && lat.trim() !== "" && lng.trim() !== "";
 
@@ -55,10 +56,11 @@ export default function AddContactScreen() {
         return;
       }
       const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
       });
       setLat(String(pos.coords.latitude));
       setLng(String(pos.coords.longitude));
+      setAccuracy(pos.coords.accuracy ?? null);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Alert.alert("Erreur", "Impossible d'obtenir votre position. Vérifiez que le GPS est activé.");
@@ -173,6 +175,7 @@ export default function AddContactScreen() {
             <Ionicons name="location" size={14} color={colors.tint} />
             <Text style={[styles.locationText, { color: colors.tint }]}>
               {parseFloat(lat).toFixed(5)}, {parseFloat(lng).toFixed(5)}
+              {accuracy !== null ? `  •  ±${Math.round(accuracy)} m` : ""}
             </Text>
           </View>
         ) : null}
